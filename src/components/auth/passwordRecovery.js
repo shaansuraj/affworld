@@ -7,12 +7,16 @@ function PasswordRecovery() {
   const [error, setError] = useState('');
   const auth = getAuth();
 
+  const isValidEmail = (email) => email.includes('@');
   const validateEmail = () => {
     if (!email) {
-      setError('Email is required');
+      setError('Email is required.');
       return false;
     }
-    // Additional email validation logic can be added here
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email.');
+      return false;
+    }
     return true;
   };
 
@@ -20,18 +24,19 @@ function PasswordRecovery() {
     e.preventDefault();
     setError('');
     setMessage('');
+
     if (!validateEmail()) return;
 
     try {
       await sendPasswordResetEmail(auth, email);
-      setMessage('Password reset email sent. Check your inbox.');
+      setMessage('Password reset email sent. Please check your inbox.');
     } catch (error) {
       setError('Failed to send password reset email: ' + error.message);
     }
   };
 
   return (
-    <div>
+    <div className="password-recovery-container">
       <h1>Password Recovery</h1>
       {error && <div style={{ color: 'red' }}>{error}</div>}
       {message && <div style={{ color: 'green' }}>{message}</div>}

@@ -3,69 +3,59 @@ import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthPro
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 
 function Signup() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const auth = getAuth();
   const db = getFirestore();
 
-  const validateForm = () => {
+  const isValidEmail = (email) => email.includes('@');
+  const isFormValid = () => {
     if (!name || !email || !password || !username) {
-      setError('All fields are required');
+      setError('All fields are required.');
+      return false;
+    }
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email.');
       return false;
     }
     return true;
   };
 
-  const handleEmailSignup = async (e) => {
-    e.preventDefault();
+  const handleSignup = async (method) => {
     setError('');
     setSuccess('');
-    if (!validateForm()) return;
+    if (method === 'email' && !isFormValid()) return;
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await setDoc(doc(db, 'users', userCredential.user.uid), { name, username, email });
-      setSuccess('Signup successful!');
-      // Reset form or redirect user
-    } catch (error) {
-      setError(error.message);
-    }
-  };
-
-  const handleGoogleSignup = async () => {
-    setError('');
-    setSuccess('');
-    try {
-      const result = await signInWithPopup(auth, provider);
-        const { user } = result;
-      // Check if user already exists in Firestore, if not, save their info
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-      if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          name: user.displayName,
-          email: user.email,
-          username: '', // Username can be added later as it's not provided by Google
-        });
+      let userCredential;
+      if (method === 'email') {
+        userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await setDoc(doc(db, 'users', userCredential.user.uid), { name, username, email });
+      } else if (method === 'google') {
+        const provider = new GoogleAuthProvider();
+        userCredential = await signInWithPopup(auth, provider);
+        // Check if user already exists in Firestore to avoid overwriting data
+        const userRef = doc(db, 'users', userCredential.user.uid);
+        // Further Firestore checks and setDoc operations can be added here
       }
-
-      setSuccess('Signup successful with Google!');
+      setSuccess('Signup successful!');
+      // Redirect or update UI post successful signup
     } catch (error) {
       setError(error.message);
     }
   };
 
   return (
-    <div>
+    <div className="signup-container">
       <h1>Signup</h1>
       {error && <div style={{ color: 'red' }}>{error}</div>}
       {success && <div style={{ color: 'green' }}>{success}</div>}
-      <form onSubmit={handleEmailSignup}>
-   <input
+      <div className="signup-form">
+        <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -93,12 +83,11 @@ function Signup() {
           placeholder="Password"
           required
         />
-        <button type="submit">Signup</button>
-      </form>
-      <button onClick={handleGoogleSignup}>Signup with Google</button>
-    </div>
-  );
+        <button onClick={() => handleSignup('email')}>Signup</button>
+        <button onClick={() => handleSignup('`google')}>Signup with Google</button>
+        </div>
+        </div>
+);
 }
-
 
 export default Signup;
