@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
 import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+
+import { FaGoogle } from "react-icons/fa";
+import { GoSignIn } from "react-icons/go";
+
+import CenterHeroSectionFrame from '../frame/hero-center'
+import SectionHeader from '../section-header'
 
 function Signup() {
   const [name, setName] = useState('');
@@ -11,6 +19,7 @@ function Signup() {
   const [success, setSuccess] = useState('');
   const auth = getAuth();
   const db = getFirestore();
+  const navigate = useNavigate();
 
   const isValidEmail = (email) => email.includes('@');
   const isFormValid = () => {
@@ -38,56 +47,75 @@ function Signup() {
       } else if (method === 'google') {
         const provider = new GoogleAuthProvider();
         userCredential = await signInWithPopup(auth, provider);
-        // Check if user already exists in Firestore to avoid overwriting data
+        // Checking if user already exists in Firestoreto avoid overwriting data
         const userRef = doc(db, 'users', userCredential.user.uid);
-        // Further Firestore checks and setDoc operations can be added here
+        const docSnap = await getDoc(userRef);
+
+        if (!docSnap.exists()) {
+          await setDoc(userRef, { 
+            name: userCredential.user.displayName, 
+            email: userCredential.user.email,
+          });
+        } else {
+          setError('You already have an account. Please login to proceed.');
+          return;
+        }
       }
       setSuccess('Signup successful!');
-      // Redirect or update UI post successful signup
+      navigate('/secrets');
     } catch (error) {
       setError(error.message);
     }
   };
 
   return (
-    <div className="signup-container">
-      <h1>Signup</h1>
+    <CenterHeroSectionFrame>
       {error && <div style={{ color: 'red' }}>{error}</div>}
       {success && <div style={{ color: 'green' }}>{success}</div>}
-      <div className="signup-form">
+      <SectionHeader topic='Signup' arrowNav='/' />
+      <div className="text-center flex flex-col w-full mx-auto lg:py-10">
         <input
-          type="text"
+          className="input-ghost-secondary input text-yellow-400 my-3 mx-auto"
           value={name}
+          type="text"
           onChange={(e) => setName(e.target.value)}
           placeholder="Full Name"
           required
         />
         <input
-          type="email"
+          className="input-ghost-secondary input text-yellow-400 my-3 w-96 mx-auto"
           value={email}
+          type="email"
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email"
           required
         />
         <input
-          type="text"
+          className="input-ghost-secondary input text-yellow-400 my-3 mx-auto"
           value={username}
+          type="text"
           onChange={(e) => setUsername(e.target.value)}
           placeholder="Username"
           required
         />
         <input
-          type="password"
+          className="input-ghost-secondary input text-yellow-400 my-3 mx-auto"
           value={password}
+          type="password"
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
           required
         />
-        <button onClick={() => handleSignup('email')}>Signup</button>
-        <button onClick={() => handleSignup('`google')}>Signup with Google</button>
+        <div className='flex justify-center my-3 mx-auto' >
+          <button className='btn btn-outline-secondary mx-2 text-yellow-400' onClick={() => handleSignup('email')}><GoSignIn />Signup</button>
+          <button className='btn btn-solid-secondary mx-2 text-yellow-400' onClick={() => handleSignup('google')}><FaGoogle /></button>
         </div>
-        </div>
-);
+        <small className='link link-warning mx-auto mt-3'>
+          <Link to='/login'>  Already having an account, Login!</Link>
+        </small>
+      </div>
+    </CenterHeroSectionFrame>
+  );
 }
 
 export default Signup;

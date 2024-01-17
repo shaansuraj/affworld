@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 
+import CenterHeroSectionFrame from '../frame/hero-center'
+import SectionHeader from '../section-header'
+
 function PasswordRecovery() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -36,21 +39,23 @@ function PasswordRecovery() {
   };
 
   return (
-    <div className="password-recovery-container">
-      <h1>Password Recovery</h1>
+    <CenterHeroSectionFrame className="password-recovery-container">
+      <SectionHeader topic='Forgot Password' arrowNav='/login' />
       {error && <div style={{ color: 'red' }}>{error}</div>}
       {message && <div style={{ color: 'green' }}>{message}</div>}
-      <form onSubmit={handlePasswordReset}>
+      <form onSubmit={handlePasswordReset} className='my-5'>
         <input
-          type="email"
+          className="input-ghost-secondary input text-yellow-400 my-3 mx-auto"
           value={email}
+          type="email"
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter your email"
           required
         />
-        <button type="submit">Reset Password</button>
+        {/* <button type="submit">Reset Password</button> */}
+        <button className='btn btn-outline-secondary mx-2 text-yellow-400'>Reset Password</button>
       </form>
-    </div>
+    </CenterHeroSectionFrame>
   );
 }
 
